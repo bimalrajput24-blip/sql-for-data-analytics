@@ -1,7 +1,4 @@
--- ==========================================
--- COLLEGE FEST REGISTRATION DATABASE
--- File: fest_union.sql
--- ==========================================
+##======================= session 10 ==============
 
 CREATE DATABASE IF NOT EXISTS fest_registrations_db;
 USE fest_registrations_db;
@@ -11,9 +8,7 @@ DROP TABLE IF EXISTS workshop_registrations;
 DROP TABLE IF EXISTS counter_registrations;
 DROP TABLE IF EXISTS online_registrations;
 
--- ==========================================
--- 1. ONLINE REGISTRATIONS
--- ==========================================
+
 CREATE TABLE online_registrations (
     reg_id INT PRIMARY KEY,
     student_name VARCHAR(100),
@@ -39,11 +34,7 @@ VALUES
 (11, 'Dev Patel', 'Sunrise Arts College', 'Dance Competition', 300, '2026-11-11'),
 (12, 'Ananya Desai', 'Silver Oak College', 'Fashion Show', 400, '2026-11-12');
 
--- ==========================================
--- 2. COUNTER REGISTRATIONS
--- Exactly four students also appear online
--- for the same event: Aarav, Priya, Rahul, Dev.
--- ==========================================
+
 CREATE TABLE counter_registrations (
     reg_id INT PRIMARY KEY,
     student_name VARCHAR(100),
@@ -69,9 +60,7 @@ VALUES
 (111, 'Nisha Patel', 'Silver Oak College', 'Fashion Show', 400, '2026-11-18'),
 (112, 'Kabir Sharma', 'Riverdale Commerce College', 'Coding Challenge', 500, '2026-11-18');
 
--- ==========================================
--- 3. UNION ALL: ONLINE + COUNTER (24 rows)
--- ==========================================
+
 SELECT
     reg_id, student_name, college, event_name,
     fee_inr, reg_date, 'Online' AS source
@@ -83,21 +72,14 @@ SELECT
 FROM counter_registrations
 ORDER BY reg_date;
 
--- ==========================================
--- 4. UNION: DISTINCT STUDENT / COLLEGE / EVENT
--- UNION ALL matching query row count = 24
--- UNION result row count = 20 (4 duplicates removed)
--- ==========================================
+
 SELECT student_name, college, event_name
 FROM online_registrations
 UNION
 SELECT student_name, college, event_name
 FROM counter_registrations;
 
--- ==========================================
--- 5. WORKSHOP REGISTRATIONS (6 rows)
--- Column order is intentionally different.
--- ==========================================
+
 CREATE TABLE workshop_registrations (
     reg_id INT PRIMARY KEY,
     event_name VARCHAR(100),
@@ -117,12 +99,7 @@ VALUES
 (205, 'Design Thinking Workshop', '2026-11-21', 'Meera Shah', 200, 'Silver Oak College'),
 (206, 'Robotics Workshop', '2026-11-21', 'Vivaan Patel', 450, 'Riverdale Commerce College');
 
--- ==========================================
--- 6. UNION ALL: ALL THREE REGISTRATION TABLES
--- Explicitly list columns in the same output order
--- despite the different workshop table column order.
--- Expected total: 12 + 12 + 6 = 30 rows.
--- ==========================================
+
 SELECT
     reg_id,
     student_name,
@@ -158,9 +135,7 @@ SELECT
 FROM workshop_registrations
 ORDER BY reg_date;
 
--- ==========================================
--- 7. FINAL VERIFICATION: MUST RETURN 30
--- ==========================================
+
 SELECT COUNT(*) AS total_registrations
 FROM (
     SELECT reg_id FROM online_registrations
