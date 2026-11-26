@@ -138,3 +138,252 @@ WHERE order_date >= '2026-10-01'
 GROUP BY restaurant_name
 HAVING COUNT(order_id) >= 50
    AND SUM(order_amount) > 100000;
+
+
+
+/*SCENARIO - 2
+You are building a customer insights report for a food delivery app. The marketing team
+needs a list of every registered customer and their most recent order details — even for
+customers who have never placed an order.
+
+Question: Which type of JOIN would you use to ensure all customers appear in the result,
+including those with no orders? Justify your choice by comparing it with INNER JOIN, and explain
+specifically what data would be lost if INNER JOIN were used instead.
+
+*/
+
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100),
+    city VARCHAR(50)
+);
+
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    order_date DATE,
+    order_amount DECIMAL(10,2),
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+INSERT INTO customers VALUES
+(1, 'Rahul', 'Surat'),
+(2, 'Priya', 'Mumbai'),
+(3, 'Amit', 'Ahmedabad'),
+(4, 'Neha', 'Delhi'),
+(5, 'Karan', 'Pune');
+
+INSERT INTO orders VALUES
+(101, 1, '2026-11-10', 500),
+(102, 1, '2026-11-20', 800),
+(103, 2, '2026-11-15', 650),
+(104, 3, '2026-11-18', 900),
+(105, 3, '2026-11-22', 1200);
+
+
+SELECT
+    c.customer_id,
+    c.customer_name,
+    c.city,
+    o.order_id,
+    o.order_date,
+    o.order_amount
+FROM customers c
+LEFT JOIN orders o
+    ON c.customer_id = o.customer_id
+ORDER BY c.customer_id, o.order_date DESC;
+
+SELECT
+    c.customer_id,
+    c.customer_name,
+    c.city,
+    o.order_id,
+    o.order_date,
+    o.order_amount
+FROM customers c
+INNER JOIN orders o
+    ON c.customer_id = o.customer_id;
+    
+    
+  /*  SCENARIO -- 3
+You are designing a delivery performance dashboard. The business wants to identify
+delivery agents whose average delivery time is faster than the overall platform average,
+without using a temporary table or creating a new view.
+
+Question: Describe how you would write a subquery to find these agents. What type of
+subquery is most appropriate here — scalar, row, or table — and why? What would happen if you
+tried to place this subquery in the SELECT clause instead of the WHERE clause?
+    
+    
+*/
+
+CREATE TABLE delivery_performance (
+    delivery_id INT PRIMARY KEY,
+    agent_name VARCHAR(100),
+    delivery_time INT
+);
+
+
+INSERT INTO delivery_performance
+(delivery_id, agent_name, delivery_time)
+VALUES
+(1, 'Rahul', 25),
+(2, 'Rahul', 30),
+(3, 'Rahul', 35),
+(4, 'Priya', 40),
+(5, 'Priya', 45),
+(6, 'Priya', 50),
+(7, 'Amit', 30),
+(8, 'Amit', 35),
+(9, 'Amit', 40),
+(10, 'Neha', 50),
+(11, 'Neha', 55),
+(12, 'Neha', 60);
+
+SELECT
+    agent_name,
+    ROUND(AVG(delivery_time), 2) AS avg_delivery_time
+FROM delivery_performance
+GROUP BY agent_name
+HAVING AVG(delivery_time) < (
+    SELECT AVG(delivery_time)
+    FROM delivery_performance
+);
+
+SELECT AVG(delivery_time)
+FROM delivery_performance;
+
+/* SCENARIO -- 4
+You are analysing order data for a food delivery company. The product team wants to
+rank the top 3 highest-revenue restaurants within each city. Two restaurants in Surat
+have the exact same revenue figure and you must decide how to number them.
+
+
+Question: Compare RANK() and DENSE_RANK() window functions for this use case. Which would
+you choose and why? Provide a brief example showing how each function would number three
+restaurants where two share the same revenue, and explain the practical impact of that
+difference on the product team's report.
+
+
+
+
+*/
+
+CREATE DATABASE restaurant_db;
+
+USE restaurant_db;
+
+CREATE TABLE restaurant_revenue (
+    restaurant_id INT PRIMARY KEY,
+    restaurant_name VARCHAR(100),
+    city VARCHAR(50),
+    revenue DECIMAL(12,2)
+);
+
+INSERT INTO restaurant_revenue
+(restaurant_id, restaurant_name, city, revenue)
+VALUES
+(1, 'Pizza Palace', 'Surat', 150000),
+(2, 'Burger Hub', 'Surat', 120000),
+(3, 'Food Junction', 'Surat', 120000),
+(4, 'Royal Kitchen', 'Surat', 100000),
+(5, 'Spice Garden', 'Surat', 80000),
+(6, 'Pizza Point', 'Mumbai', 200000),
+(7, 'Burger King', 'Mumbai', 180000),
+(8, 'Food Corner', 'Mumbai', 160000),
+(9, 'Spicy Treat', 'Mumbai', 140000);
+
+SELECT
+    restaurant_name,
+    city,
+    revenue,
+    RANK() OVER (
+        PARTITION BY city
+        ORDER BY revenue DESC
+    ) AS restaurant_rank
+FROM restaurant_revenue;
+
+SELECT
+    restaurant_name,
+    city,
+    revenue,
+    DENSE_RANK() OVER (
+        PARTITION BY city
+        ORDER BY revenue DESC
+    ) AS restaurant_rank
+FROM restaurant_revenue;
+
+/*SCENARIO -- 5
+You are writing a CRM query for a food delivery startup. The customer success team
+wants each customer labelled as 'Platinum', 'Gold', or 'Standard' based on total lifetime
+spend — above Rs 5,000, between Rs 2,000 and Rs 5,000, and below Rs 2,000
+respectively — directly in the query output without creating a new table.
+
+
+Question: Explain how you would use CASE WHEN to generate this classification column. If a
+customer's total spend is exactly Rs 5,000, which tier will they fall into, and how does the order of
+your WHEN conditions control that outcome?
+
+
+*/
+
+CREATE DATABASE food_crm_db;
+
+USE food_crm_db;
+
+CREATE TABLE customer_orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    customer_name VARCHAR(100),
+    order_amount DECIMAL(10,2)
+);
+
+INSERT INTO customer_orders
+(order_id, customer_id, customer_name, order_amount)
+VALUES
+(1, 101, 'Rahul', 3000),
+(2, 101, 'Rahul', 2500),
+(3, 102, 'Priya', 2000),
+(4, 102, 'Priya', 1500),
+(5, 103, 'Amit', 1000),
+(6, 103, 'Amit', 500),
+(7, 104, 'Neha', 5000),
+(8, 105, 'Karan', 1500);
+
+SELECT
+    customer_id,
+    customer_name,
+    SUM(order_amount) AS total_spend,
+
+    CASE
+        WHEN SUM(order_amount) > 5000
+            THEN 'Platinum'
+
+        WHEN SUM(order_amount) >= 2000
+             AND SUM(order_amount) <= 5000
+            THEN 'Gold'
+
+        ELSE 'Standard'
+    END AS customer_tier
+
+FROM customer_orders
+GROUP BY customer_id, customer_name
+ORDER BY total_spend DESC;
+
+
+/*SCENARIO -- 6
+You are optimising a slow-running analytics query for a food delivery platform. The
+query joins four large tables and applies a GROUP BY across 10 million rows, taking over
+30 seconds. A colleague suggests adding an index on the JOIN column used most
+frequently.
+
+
+Question: Explain what a database index does at the engine level and why it would speed up
+this specific query. Are there scenarios where adding an index could actually hurt performance?
+What trade-off must you evaluate before indexing every column in a large table?
+
+
+
+*/
+
+
